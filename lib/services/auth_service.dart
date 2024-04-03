@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:ngdemo16_fairbace/services/prefs_service.dart';
 
 class AuthService {
   static final _auth = FirebaseAuth.instance;
@@ -31,7 +32,8 @@ class AuthService {
     return null;
   }
 
-  static void signOutUser(BuildContext context) {
+  static void signOutUser(BuildContext context)async {
     _auth.signOut();
+    await Prefs.removeUserId();
   }
 }

@@ -16,22 +16,11 @@ void main()async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   Widget _startPage() {
-    // return StreamBuilder<User>(
-    //   stream: FirebaseAuth.instance.onAuthStateChanged,
-    //   builder: (BuildContext context, snapshot) {
-    //     if (snapshot.hasData) {
-    //       Prefs.saveUserId(snapshot.data!.uid);
-    //       return HomePage();
-    //     } else {
-    //       Prefs.removeUserId();
-    //       return SignInPage();
-    //     }
-    //   },
-    // );
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (BuildContext context, snapshot) {
         if (snapshot.hasData) {
+          //lokalga saqlaydi
           Prefs.saveUserId(snapshot.data!.uid);
           return HomePage();
         } else {

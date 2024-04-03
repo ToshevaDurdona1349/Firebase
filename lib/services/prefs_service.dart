@@ -8,10 +8,10 @@ class Prefs{
     return prefs.setString('user_id', user_id);
   }
 
-  static Future<String?> loadUserId() async {
+  static Future<String> loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('user_id');
-    return token;
+    return token ?? "";
   }
 
   static Future<bool> removeUserId() async {

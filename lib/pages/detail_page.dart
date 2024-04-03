@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ngdemo16_fairbace/services/prefs_service.dart';
+import 'package:ngdemo16_fairbace/services/utils_service.dart';
+
 import '../model/post_model.dart';
-import '../services/prefs_service.dart';
+import '../services/file_service.dart';
 import '../services/rtdb_service.dart';
-import '../services/stor_service.dart';
 
 class DetailPage extends StatefulWidget {
   static final String id = "detail_page";
@@ -12,43 +14,52 @@ class DetailPage extends StatefulWidget {
   @override
   _DetailPageState createState() => _DetailPageState();
 }
+
 class _DetailPageState extends State<DetailPage> {
   var isLoading = false;
-  late File _image;
+  // rasmni import qiladi
+  File? _image;
   final picker = ImagePicker();
-
 
   var titleController = TextEditingController();
   var contentController = TextEditingController();
 
-  _addPost() async {
-    String title = titleController.text.toString();
-    String content = contentController.text.toString();
-    if (title.isEmpty || content.isEmpty) return;
-    if(_image == null) return;
-
-    _apiUploadImage(title,content);
+  _addNewPost() async {
+    String title = titleController.text.toString().trim();
+    String content = contentController.text.toString().trim();
+    if(_image ==null){
+      Utils.fireToast("Please select an image from your gallery");
+      return;
+    }
+    String img_url = "";
+    String userId = await Prefs.loadUserId();
+    Post post = Post(userId, title, content, img_url);
+    _apiUploadImage(post);
   }
-  void _apiUploadImage(String title, String content) {
+//post yaratilganda rasmni upload qiladi
+  void _apiUploadImage(Post post) async {
     setState(() {
       isLoading = true;
     });
-    StoreService.uploadImage(_image).then((img_url) => {
-      _apiAddPost(title, content, img_url!),
+    String img_url = await FileService.uploadPostImage(_image!);
+    post.img_url = img_url;
+
+    _apiAddPost(post);
+  }
+  _apiAddPost(Post post) async {
+    setState(() {
+      isLoading = true;
     });
+    await DBService.storePost(post);
+
+    _backToFinish();
   }
 
-  _apiAddPost(String title, String content,String img_url) async {
-    var id = await Prefs.loadUserId();
-    RTDBService.addPost(Post(id!, title, content,img_url)).then((response) => {
-      _respAddPost(),
-    });
-  }
-  _respAddPost() {
+  _backToFinish() {
     setState(() {
       isLoading = false;
     });
-    Navigator.of(context).pop({'data': 'done'});
+    Navigator.of(context).pop(true);
   }
 
   Future _getImage() async {
@@ -62,71 +73,87 @@ class _DetailPageState extends State<DetailPage> {
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Add Post"),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Container(
-              height: MediaQuery.of(context).size.height,
-              padding: EdgeInsets.all(30),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: _getImage,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      child: _image != null ?
-                      Image.file(_image,fit: BoxFit.cover) :
-                      Image.asset("assets/images/ic_camera.png"),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                  TextField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      hintText: "Title",
-                    ),
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                  TextField(
-                    controller: contentController,
-                    decoration: InputDecoration(
-                      hintText: "Content",
-                    ),
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                  Container(
-                    width: double.infinity,
-                    height: 45,
-                    child: FloatingActionButton(
-                      onPressed: _addPost,
-                      child: Text(
-                        "Add",
-                        style: TextStyle(color: Colors.white),
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.blue,
+          title: const Text("Add Post",style: TextStyle(color: Colors.white),),
+          leading: IconButton(
+            onPressed: (){
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.arrow_back_ios,color: Colors.white,),
+          ),
+        ),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                padding: EdgeInsets.all(30),
+                child: Column(
+                  children: [
+                    //rasmchiqarib beradi
+                    GestureDetector(
+                      onTap: _getImage,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        child: _image != null
+                            ? Image.file(_image!, fit: BoxFit.cover)
+                            : Image.asset("assets/images/ic_camera.png"),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        hintText: "Title",
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    TextField(
+                      controller: contentController,
+                      decoration: const InputDecoration(
+                        hintText: "Content",
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 45,
+                      child: MaterialButton(
+                        onPressed: _addNewPost,
+                        color: Colors.blue,
+                        child: const Text(
+                          "Add",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          isLoading? Center(
-            child: CircularProgressIndicator(),
-          ): SizedBox.shrink(),
-        ],
+            isLoading
+                ? const Center(
+              child: CircularProgressIndicator(),
+            )
+                : const SizedBox.shrink(),
+          ],
+        ),
       ),
     );
   }

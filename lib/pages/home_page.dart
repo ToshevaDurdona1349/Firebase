@@ -1,127 +1,138 @@
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:ngdemo16_fairbace/pages/detail_page.dart';
+
 import '../model/post_model.dart';
 import '../services/auth_service.dart';
-import '../services/prefs_service.dart';
 import '../services/rtdb_service.dart';
+import 'detail_page.dart';
 
 class HomePage extends StatefulWidget {
-  static final String id = "home_page";
+  static const String id = "home_page";
+
+  const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
+
 class _HomePageState extends State<HomePage> {
-  var isLoading = false;
-  List<Post> posts = [];
-  late var items = <Post>[]; // Initialize items as a list of Post objects
+  bool isLoading = false;
+  List<Post> items = [];
+
+  _apiLoadPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    List<Post> posts = await DBService.loadPosts();
+    setState(() {
+      items = posts;
+      isLoading = false;
+    });
+  }
+
+  Future _callDetailPage() async {
+    bool results = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (BuildContext context) {
+      return DetailPage();
+    }));
+    if (results) {
+      _apiLoadPosts();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _apiGetPosts();
-  }
-
-  // Method to navigate to the detail page and handle returned data
-  _openDetail() async {
-    Map results = await Navigator.of(context).push(new MaterialPageRoute(
-      builder: (BuildContext context) {
-        return new DetailPage();
-      },
-    ));
-    if (results != null && results.containsKey("data")) {
-      print(results['data']);
-      _apiGetPosts();
-    }
-  }
-
-  // Method to fetch posts from the database
-  _apiGetPosts() async {
-    setState(() {
-      isLoading = true;
-    });
-    var id = await Prefs.loadUserId();
-    RTDBService.getPosts(id!).then((List<Post> fetchedPosts) {
-      _respPosts(fetchedPosts);
-    });
-  }
-
-  // Method to update the UI with fetched posts
-  _respPosts(List<Post> fetchedPosts) {
-    setState(() {
-      isLoading = false;
-      items = fetchedPosts; // Assign fetchedPosts to items
-    });
+    _apiLoadPosts();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: Text("All Posts")),
+        backgroundColor: Colors.blue,
+        title: const Text("My Posts",style: TextStyle(color: Colors.white),),
         actions: [
           IconButton(
             onPressed: () {
               AuthService.signOutUser(context);
             },
-            icon: Icon(Icons.exit_to_app, color: Colors.white),
+            icon: const Icon(Icons.exit_to_app,color: Colors.white,),
           ),
         ],
       ),
       body: Stack(
         children: [
           ListView.builder(
-            itemCount: items.length, // Use items.length instead of items.l
-            itemBuilder: (ctx, i) {
-              return itemOfList(items[i]); // Access items[i]
+            itemCount: items.length,
+            itemBuilder: (ctx, index) {
+              return itemOfPost(items[index]);
             },
           ),
           isLoading
-              ? Center(
+              ? const Center(
             child: CircularProgressIndicator(),
           )
-              : SizedBox.shrink(),
+              : const SizedBox.shrink(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _openDetail,
-        child: Icon(Icons.add),
         backgroundColor: Colors.blue,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          _callDetailPage();
+        },
       ),
     );
   }
 
-  // Method to build the item widget for the ListView
-  Widget itemOfList(Post post) {
+  Widget itemOfPost(Post post) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          // rasmni add bosganda ko'rsatib beradi
+          CachedNetworkImage(
             height: 70,
             width: 70,
-            child: post.img_url != null
-                ? Image.network(
-              post.img_url,
-              fit: BoxFit.cover,
-            )
-                : Image.asset("assets/images/ic_default.png"),
+            imageUrl: post.img_url,
+            placeholder: (context, url) => Container(
+              color: Colors.grey.withOpacity(0.5),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            fit: BoxFit.cover,
           ),
-          SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                post.title,
-                style: TextStyle(color: Colors.black, fontSize: 20),
-              ),
-              SizedBox(height: 10),
-              Text(
-                post.content,
-                style: TextStyle(color: Colors.black, fontSize: 16),
-              ),
-            ],
+          const SizedBox(
+            width: 20,
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(
+                  width: 15,
+                ),
+                Text(
+                  post.title,
+                  maxLines: 1,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  post.content,
+                  maxLines: 2,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -14,7 +14,6 @@ class SignUpPage extends StatefulWidget {
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
-
 class _SignUpPageState extends State<SignUpPage> {
 
   var isLoading = false;
@@ -33,22 +32,24 @@ class _SignUpPageState extends State<SignUpPage> {
       isLoading = true;
     });
     AuthService.signUpUser(context, name, email, password).then((firebaseUser) => {
-      _getFirebaseUser(firebaseUser!),
+      _getFirebaseUser(firebaseUser),
     });
   }
 
-  _getFirebaseUser(User firebaseUser) async {
+  _getFirebaseUser(User? firebaseUser) async {
     setState(() {
       isLoading = false;
     });
     if (firebaseUser != null) {
       await Prefs.saveUserId(firebaseUser.uid);
-      Navigator.pushReplacementNamed(context, HomePage.id);
+      _callHomePage();
     } else {
       Utils.fireToast("Check your informations");
     }
   }
-
+  _callHomePage(){
+    Navigator.pushReplacementNamed(context, HomePage.id);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

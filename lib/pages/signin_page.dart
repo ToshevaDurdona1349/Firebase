@@ -18,8 +18,6 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   var isLoading = false;
 
-
-
   var emailController = TextEditingController();
   var passwordController = TextEditingController();
 
@@ -32,22 +30,25 @@ class _SignInPageState extends State<SignInPage> {
       isLoading = true;
     });
     AuthService.signInUser(context, email, password).then((firebaseUser) => {
-      _getFirebaseUser(firebaseUser!),
+      _getFirebaseUser(firebaseUser),
     });
   }
-
-  _getFirebaseUser(User firebaseUser) async {
+//login qilgan odamni lakalda saqlaydi
+  _getFirebaseUser(User? firebaseUser) async {
     setState(() {
       isLoading = false;
     });
     if (firebaseUser != null) {
       await Prefs.saveUserId(firebaseUser.uid);
-      Navigator.pushReplacementNamed(context, HomePage.id);
+      _callHomePage();
     } else {
       Utils.fireToast("Check your email or password");
     }
   }
 
+  _callHomePage(){
+    Navigator.pushReplacementNamed(context, HomePage.id);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
