@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "266354189295",
+    "project_id": "myposts-6b9e5",
+    "storage_bucket": "myposts-6b9e5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266354189295:android:a8e85947fba480ecc8cc1a",
+        "android_client_info": {
+          "package_name": "com.example.ngdemo16_fairbace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBy7D-tE4p6b4mrDD7qADlyXEI0n4GhAM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
